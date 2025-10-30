@@ -181,6 +181,25 @@ int kissat_search (kissat *solver) {
   int res = 0;
   if (solver->inconsistent)
     res = 20;
+  // ---- apply init-phase ONCE before lucky/preprocess ----
+  if (!solver->initphases_applied && solver->init_phase_path) {
+    const int n = solver->vars;
+    value *tmp = kissat_calloc (solver, n, sizeof(value));
+    if (read_init_phase_file_binary(solver, solver->init_phase_path, tmp, n)) {
+#ifndef QUIET
+      kissat_message(solver, "init-phase: applying %d phases from '%s'",
+                     n, solver->init_phase_path);
+#endif
+      kissat_load_initial_phases_binary (solver, tmp);
+      solver->initphases_applied = true;
+      // 선택: 초기 페이즈를 'best/target'에도 저장
+      kissat_save_best_phases   (solver);
+      kissat_save_target_phases (solver);
+    }
+    kissat_free (solver, tmp, n * sizeof(value));
+  }
+  // -------------------------------------------------------
+
   if (!res && GET_OPTION (luckyearly))
     res = kissat_lucky (solver);
   if (!res && kissat_preprocessing (solver))

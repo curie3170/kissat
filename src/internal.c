@@ -36,6 +36,11 @@ kissat *kissat_init (void) {
   kissat_init_queue (solver);
   assert (INTERNAL_MAX_LIT < UINT_MAX);
   kissat_push_frame (solver, UINT_MAX);
+  //init phase
+  solver->initphases_applied = false;
+  solver->init_phase_buf = 0;
+  solver->init_phase_path = 0;
+  //
   solver->watching = true;
   solver->conflict.size = 2;
   solver->scinc = 1.0;
