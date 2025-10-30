@@ -386,7 +386,7 @@ static bool parse_options (application *application, int argc,
   const char *conflicts_option = 0;
   const char *decisions_option = 0;
   const char *time_option = 0;
-  const char *valstr;
+  // const char *valstr;
   for (int i = 1; i < argc; i++) {
     const char *arg = argv[i];
     if (single_first_option (arg))
