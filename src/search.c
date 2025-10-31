@@ -186,15 +186,12 @@ int kissat_search (kissat *solver) {
     const int n = solver->vars;
     value *tmp = kissat_calloc (solver, n, sizeof(value));
     if (read_init_phase_file_binary(solver, solver->init_phase_path, tmp, n)) {
-#ifndef QUIET
-      kissat_message(solver, "init-phase: applying %d phases from '%s'",
-                     n, solver->init_phase_path);
-#endif
-      kissat_load_initial_phases_binary (solver, tmp);
+      kissat_load_initial_phases_binary(solver, tmp);
       solver->initphases_applied = true;
-      // 선택: 초기 페이즈를 'best/target'에도 저장
+
       kissat_save_best_phases   (solver);
       kissat_save_target_phases (solver);
+      kissat_set_option(solver, "phases", 1); // rephase
     }
     kissat_free (solver, tmp, n * sizeof(value));
   }

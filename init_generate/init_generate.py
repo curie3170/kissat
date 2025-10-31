@@ -3,11 +3,23 @@ import json
 import argparse
 import sys
 import math
-
+# 0876c518e5653369e20fb1ee0bb8db40 (5) 8.53/ 57.46/ phase(8.14)
+# 54c2da6d387a6f5ad6e014ae4d4decfc (22) 4.02/ 64.47/ phase(38.86)
+# 0fa9521ff633b27be11525a7b0f7d8b6 (36) 18.70/ 3.49/ phase(71.89) 
+# 13ae2628d8e113db1786dba41a65fe38-x9-10027.sat.sanitized (76)
+# 195852083a05edee1902233698eec14a-x9-11077.sat.sanitized (13)
 # How to use:
+# /home/curie/DiffSAT/KisSAT/kissat/build/kissat ../DiffSAT/dataset/sat_cnf_2024_satisfiable/$cnf/$cnf.cnf
+# /home/curie/DiffSAT/KisSAT/kissat/build/kissat /home/curie/DiffSAT/dataset/sat_cnf_2024_satisfiable/$cnf/clean/"$cnf"_partial_88.cnf
 # cnf=16c5482d8e658b54e20d59cfd4b1d588-two-trees-511v.sanitized
+
+# Generate Phase and run kissat with initial phase
 # python init_generate/init_generate.py -i /home/curie/DiffSAT/dataset/sat_cnf_2024_satisfiable/$cnf/results_3SAT/ranked_by_confidence_0.txt -o /home/curie/kissat/init_generate/0.txt 
 # ./build/kissat --init-phase-file=/home/curie/kissat/init_generate/0.txt /home/curie/DiffSAT/dataset/sat_cnf_2024_satisfiable/$cnf/$cnf.cnf
+
+# To verify its actually SAT
+# python init_generate/verify_unit_clauses.py  -i /home/curie/DiffSAT/dataset/sat_cnf_2024_satisfiable/$cnf/$cnf.cnf -a /home/curie/kissat/init_generate/assignments.txt  -o init_generate/assignments_unit.cnf
+# /home/curie/DiffSAT/KisSATassignments_unit.cnf
 def main():
     parser = argparse.ArgumentParser(
         description="init-phase text generator"

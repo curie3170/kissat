@@ -68,72 +68,75 @@ void kissat_save_target_phases (kissat *solver) {
   save_phases (solver, solver->phases.target);
 }
 static int token_to_phase (const char *s) {
-  char buf[64];
-  size_t n = strlen(s);
-  if (n >= sizeof(buf)) return -2;  // invalid (too long)
-  for (size_t i = 0; i < n; i++) buf[i] = (char)tolower((unsigned char)s[i]);
-  buf[n] = 0;
-
-  // true / 1 / +1
-  if (!strcmp(buf, "1") || !strcmp(buf, "+1") || !strcmp(buf, "t") || !strcmp(buf, "true"))
+  // +1 
+  if (!strcasecmp(s, "1") || !strcasecmp(s, "+1") ||
+      !strcasecmp(s, "t") || !strcasecmp(s, "true"))
     return +1;
-
-  // false / 0 / -1
-  if (!strcmp(buf, "0") || !strcmp(buf, "-1") || !strcmp(buf, "f") || !strcmp(buf, "false"))
+  // -1 
+  if (!strcasecmp(s, "0") || !strcasecmp(s, "-1") ||
+      !strcasecmp(s, "f") || !strcasecmp(s, "false"))
     return -1;
+  // “d / x / none / skip / *” is considered skip (0)
+  if (!strcasecmp(s, "d") || !strcasecmp(s, "x") ||
+      !strcasecmp(s, "none") || !strcasecmp(s, "skip") ||
+      !strcmp(s, "*"))
+    return 0;
 
-  // don't-care / skip
-  if (!strcmp(buf, "d") || !strcmp(buf, "x") || !strcmp(buf, "*") || !strcmp(buf, "skip"))
-    return 0;   // 0 = SKIP
-
-  return -2;     // invalid
+  return 2; // invalid
 }
 
 bool read_init_phase_file_binary (kissat *solver,
                                   const char *path,
                                   value *out, int n) {
   FILE *f = fopen(path, "r");
-  if (!f) {
-    kissat_message(solver, "could not open init phase file '%s'", path);
-    return false;
-  }
+  if (!f) { kissat_message(solver, "could not open init phase file '%s'", path); return false; }
 
-  int i = 0, n_pos = 0, n_neg = 0, n_skip = 0;
+  int i = 0, n_pos = 0, n_neg = 0, n_zero = 0;
   char buf[64];
   while (i < n && fscanf(f, "%63s", buf) == 1) {
     int v = token_to_phase(buf);
-    if (v == +1)      { out[i++] = (value)+1; n_pos++; }
-    else if (v == -1) { out[i++] = (value)-1; n_neg++; }
-    else if (v == 0)  { out[i++] = (value) 0; n_skip++; }   // skip
-    else {
-      kissat_message(solver,
-        "invalid token '%s' at index %d in '%s' (use 1/0, +1/-1, true/false, or d/x/*/skip)",
-        buf, i, path);
+    if (v == 2) { // invalid
+      kissat_message(solver, "invalid token '%s' at index %d in '%s' (use 1/0/d, +1/-1, true/false, ...)",
+                     buf, i, path);
       fclose(f);
       return false;
     }
+    out[i++] = (value)v;     // +1 / -1 / 0
+    if      (v > 0) n_pos++;
+    else if (v < 0) n_neg++;
+    else            n_zero++;
   }
   fclose(f);
 
   if (i != n) {
-    kissat_message(solver, "init phase file '%s' has %d entries but %d variables", path, i, n);
+    kissat_message(solver, "init-phase file '%s' has %d entries but solver has %d variables",
+                   path, i, n);
     return false;
   }
 
-  kissat_message(solver, "init-phase: parsed '%s': +1=%d, -1=%d, skip=%d (total %d of %d)",
-                 path, n_pos, n_neg, n_skip, i, n);
+  kissat_message(solver, "init-phase: parsed '%s': +1=%d, -1=%d, d=%d (total %d)",
+                 path, n_pos, n_neg, n_zero, i);
   return true;
 }
-void kissat_load_initial_phases_binary (kissat *solver, const value *phases) {
-  const int vars = solver->vars;
-  value *values = solver->values;      // length = 2*vars
-  for (int i = 0; i < vars; i++) {
-    const value p = phases[i];         // +1 / -1 / 0(skip)
-    if (p == +1 || p == -1) {
-      values[2*i]   = p;               
-      values[2*i^1] = -p;             
-    } else {
-      // p == 0 => skip
-    }
-  }
+// void kissat_load_initial_phases_binary (kissat *solver, const value *phases) {
+//   const int vars = solver->vars;
+//   value *values = solver->values;      // length = 2*vars
+//   for (int i = 0; i < vars; i++) {
+//     const value p = phases[i];         // +1 / -1 / 0(skip)
+//     if (p == +1 || p == -1) {
+//       values[2*i]   = p;               
+//       values[2*i^1] = -p;             
+//     } else {
+//       // p == 0 => skip
+//     }
+//   }
+// }
+// phases.c
+// phases.c
+void kissat_load_initial_phases_binary (kissat *solver, const value *ph) {
+  const unsigned n = solver->vars;
+  memcpy(solver->phases.target, ph, n * sizeof(value));
+  memcpy(solver->phases.best,   ph, n * sizeof(value));
+
+  kissat_message(solver, "init-phase: applied to target/best (%u vars)", n);
 }
