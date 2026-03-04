@@ -23,6 +23,46 @@
 #include "walk.h"
 
 #include <inttypes.h>
+#include <string.h>
+// ---- Load decision ----
+static void kissat_load_decision_list(kissat *solver, const char *path) {
+  solver->decision_list = 0;
+  solver->decision_len = 0;
+  solver->decision_pos = 0;
+  solver->decision_active = false;
+  FILE *f = fopen(path, "r");
+  //if (!f) return;
+  if (!f) {
+  kissat_message(solver, "could not open decision list file '%s'", path);
+  return;
+  }
+
+  size_t cap = 256, size = 0;
+  unsigned *tmp = malloc(cap * sizeof(unsigned));
+  if (!tmp) { fclose(f); return; }
+
+  unsigned idx;
+  while (fscanf(f, "%u", &idx) == 1) {
+    if (idx >= (unsigned) solver->vars) continue;
+    if (size == cap) {
+      cap *= 2;
+      unsigned *n = realloc(tmp, cap * sizeof(unsigned));
+      if (!n) break;
+      tmp = n;
+    }
+    tmp[size++] = idx;
+  }
+  fclose(f);
+
+  if (!size) { free(tmp); return; }
+
+  solver->decision_list = kissat_malloc(solver, size * sizeof(unsigned));
+  memcpy(solver->decision_list, tmp, size * sizeof(unsigned));
+  free(tmp);
+
+  solver->decision_len = (unsigned) size;
+  solver->decision_pos = 0;
+}
 
 static void init_tiers (kissat *solver) {
   for (unsigned stable = 0; stable != 2; stable++) {
@@ -194,6 +234,11 @@ int kissat_search (kissat *solver) {
       kissat_set_option(solver, "phases", 1); // rephase
     }
     kissat_free (solver, tmp, n * sizeof(value));
+  }
+  // ---- Load decision phases ----
+  if (solver->decision_path && !solver->decision_list) {
+    kissat_load_decision_list(solver, solver->decision_path);
+    solver->decision_active = (solver->decision_list != NULL);
   }
   // -------------------------------------------------------
 
