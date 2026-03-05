@@ -28,5 +28,6 @@ void kissat_release_phases (struct kissat *);
 
 void kissat_save_best_phases (struct kissat *);
 void kissat_save_target_phases (struct kissat *);
-
+bool read_init_phase_file_binary (kissat *solver, const char *path, value *out, int n);
+void kissat_load_initial_phases_binary (kissat *solver, const value *phases);
 #endif

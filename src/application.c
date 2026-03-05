@@ -11,12 +11,15 @@
 #include "proof.h"
 #include "resources.h"
 #include "witness.h"
-
+#include "kissat.h"
 #include <inttypes.h>
 #include <string.h>
 #include <unistd.h>
 
 #define SOLVER_NAME "Kissat SAT Solver"
+void kissat_set_init_phase_file(kissat *solver, const char *path) {
+  solver->init_phase_path = path;
+}
 void kissat_set_decision_file(kissat *solver, const char *path) {
   solver->decision_path = path;
 }
@@ -226,6 +229,7 @@ static void print_complete_usage (void) {
           "supported:\n");
   printf ("\n");
   kissat_configuration_usage ();
+  printf ("  --init-phase-file=<path>  load initial variable phases (0/1,+1/-1,...)\n");
   printf ("  --decision-file=<path>  load decision variable phases\n");
   printf ("\n");
   printf ("Or '<option>' is one of the following long options:\n\n");
@@ -385,12 +389,33 @@ static bool parse_options (application *application, int argc,
   const char *conflicts_option = 0;
   const char *decisions_option = 0;
   const char *time_option = 0;
-  const char *valstr;
+  //const char *valstr;
   for (int i = 1; i < argc; i++) {
     const char *arg = argv[i];
     if (single_first_option (arg))
       ERROR ("option '%s' only allowed as %s argument", arg,
              i == 1 ? "single" : "first");
+    // ---- init-phase-file (two forms) ----
+    const char *valstr = 0;
+    if (!strcmp(arg, "--init-phase-file")) {
+      // space-separated: --init-phase-file <path>
+      if (++i == argc) ERROR ("argument to '--init-phase-file' missing");
+      valstr = argv[i];
+    } else if ((valstr = kissat_parse_option_name(arg, "init-phase-file"))) {
+      // equals: --init-phase-file=<path>
+      /* valstr already set */
+    }
+    if (valstr) {
+      if (!kissat_file_readable (valstr))
+        ERROR ("can not read init phase file '%s'", valstr);
+      kissat_set_init_phase_file (solver, valstr);
+#ifndef QUIET
+    kissat_message (solver, "init-phase: option set to '%s'", valstr);
+#endif
+    continue;  // handled; move to next argv
+  }
+  // ---- end init-phase-file ----
+
 #if !defined(NPROOFS) || !defined(KISSAT_HAS_COMPRESSION)
     else if (!strcmp (arg, "-f") || LONG_TRUE_OPTION (arg, "force") ||
              LONG_TRUE_OPTION (arg, "forced")) {

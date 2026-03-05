@@ -270,6 +270,22 @@ int kissat_search (kissat *solver) {
   int res = 0;
   if (solver->inconsistent)
     res = 20;
+  // ---- apply init-phase ONCE before lucky/preprocess ----
+   if (!solver->initphases_applied && solver->init_phase_path) {
+    const int n = solver->vars;
+    value *tmp = kissat_calloc (solver, n, sizeof(value));
+    if (read_init_phase_file_binary(solver, solver->init_phase_path, tmp, n)) {
+      kissat_load_initial_phases_binary(solver, tmp);
+      solver->initphases_applied = true;
+
+      kissat_save_best_phases   (solver);
+      kissat_save_target_phases (solver);
+      kissat_set_option(solver, "phases", 1); // rephase
+    }
+    kissat_free (solver, tmp, n * sizeof(value));
+  }
+  // -------------------------------------------------------
+
   // ---- Load decision phases ----
   if (solver->decision_path && !solver->decision_list) {
     kissat_load_decision_list(solver, solver->decision_path);

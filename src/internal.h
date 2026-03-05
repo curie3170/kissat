@@ -125,7 +125,10 @@ struct kissat {
   unsigned decision_pos;
   unsigned decision_len;
   unsigned *decision_list;  
-
+  // Initialize Phases
+  bool initphases_applied;
+  const value *init_phase_buf;
+  const char *init_phase_path;
   eliminated eliminated;
   unsigneds etrail;
 
