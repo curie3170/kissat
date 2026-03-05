@@ -2,7 +2,7 @@
 #define _kissat_h_INCLUDED
 
 typedef struct kissat kissat;
-
+void kissat_set_decision_file(kissat *solver, const char *path);
 // Default (partial) IPASIR interface.
 
 const char *kissat_signature (void);

@@ -119,6 +119,13 @@ struct kissat {
   value *values;
   phases phases;
 
+  // Initial Decision Phases
+  const char *decision_path;
+  bool decision_active;
+  unsigned decision_pos;
+  unsigned decision_len;
+  unsigned *decision_list;  
+
   eliminated eliminated;
   unsigneds etrail;
 

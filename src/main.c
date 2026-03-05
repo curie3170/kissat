@@ -6,6 +6,25 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <string.h>
+static const char *extract_decision_path_from_argv (int *argc, char ***argv) {
+  // Parser: --decision-file=PATH
+  char **av = *argv;
+  int ac = *argc;
+  const char *path = 0;
+  int w = 0;
+  for (int r = 0; r < ac; r++) {
+    const char *a = av[r];
+    if (!strncmp(a, "--decision-file=", 16)) {
+      path = a + 16;
+      continue;
+    }
+    av[w++] = av[r];
+  }
+  av[w] = 0;
+  *argc = w;
+  return path;
+}
 
 static kissat *volatile solver;
 
@@ -46,6 +65,13 @@ int main (int argc, char **argv) {
   solver = kissat_init ();
   kissat_init_alarm (kissat_alarm_handler);
   kissat_init_signal_handler (kissat_signal_handler);
+
+  const char *decision_path = extract_decision_path_from_argv(&argc, &argv);
+  if (decision_path) {
+    kissat_set_decision_file(solver, decision_path);
+    kissat_message(solver, "decision-file: option set to '%s'", decision_path);
+  }
+
   res = kissat_application (solver, argc, argv);
   kissat_reset_signal_handler ();
   ignore_alarm = true;

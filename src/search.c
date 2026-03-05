@@ -21,8 +21,97 @@
 #include "terminate.h"
 #include "trail.h"
 #include "walk.h"
+#include "inlineheap.h"
 
 #include <inttypes.h>
+#include <string.h>
+// ---- Load decision ----
+static void kissat_load_decision_list(kissat *solver, const char *path) {
+  solver->decision_list = 0;
+  solver->decision_len = 0;
+  solver->decision_pos = 0;
+  solver->decision_active = false;
+  FILE *f = fopen(path, "r");
+  //if (!f) return;
+  if (!f) {
+  kissat_message(solver, "could not open decision list file '%s'", path);
+  return;
+  }
+
+  size_t cap = 256, size = 0;
+  unsigned *tmp = malloc(cap * sizeof(unsigned));
+  if (!tmp) { fclose(f); return; }
+
+  unsigned idx;
+  while (fscanf(f, "%u", &idx) == 1) {
+    if (idx >= (unsigned) solver->vars) continue;
+    if (size == cap) {
+      cap *= 2;
+      unsigned *n = realloc(tmp, cap * sizeof(unsigned));
+      if (!n) break;
+      tmp = n;
+    }
+    tmp[size++] = idx;
+  }
+  fclose(f);
+
+  if (!size) { free(tmp); return; }
+
+  solver->decision_list = kissat_malloc(solver, size * sizeof(unsigned));
+  memcpy(solver->decision_list, tmp, size * sizeof(unsigned));
+  free(tmp);
+  solver->decision_len = (unsigned) size;
+  solver->decision_pos = 0;
+
+  // --- Increase VSIDS scores for top 50 decision variables ---
+  unsigned count = 0;
+  heap *scores = &solver->scores; 
+
+  for (unsigned i = 0; i < solver->decision_len && count < 50; i++) {
+    unsigned idx = solver->decision_list[i];
+    
+    if (idx < (unsigned) solver->vars) {
+      // 1. Direcly put 10000 to the score array
+      scores->score[idx] = 10000.0;
+
+      // 2. Check if the variable is currently in the heap and adjust its position
+      if (kissat_heap_contains (scores, idx)) {
+          // The score has changed, so bubble it up in the heap
+          // This function is the most suitable for Kissat's inline heap structure.
+          kissat_bubble_up (solver, scores, idx); 
+      } else {
+          // 
+          kissat_push_heap (solver, scores, idx);
+      }
+      count++;
+    }
+  }
+  
+  // print which variables were prioritized
+  kissat_message (solver, "assigned 10000.0 VSIDS score to top %u variables", count);
+  char list_buffer[512] = {0};
+  int offset = 0;
+
+  for (unsigned i = 0; i < count; i++) {
+    int written = snprintf (list_buffer + offset, sizeof (list_buffer) - offset, 
+                            "%u ", solver->decision_list[i]);
+    if (written > 0 && (size_t)(offset + written) < sizeof (list_buffer)) {
+      offset += written;
+    } else {
+      snprintf (list_buffer + offset - 4, 4, "...");
+      break;
+    }
+  }
+  kissat_message (solver, "prioritized variables: %s", list_buffer);
+
+  // resort heap after bulk score updates
+  kissat_rescale_heap (solver, scores, 1.0);
+
+  
+  
+  solver->decision_len = (unsigned) size;
+  solver->decision_pos = 0;
+}
 
 static void init_tiers (kissat *solver) {
   for (unsigned stable = 0; stable != 2; stable++) {
@@ -181,6 +270,11 @@ int kissat_search (kissat *solver) {
   int res = 0;
   if (solver->inconsistent)
     res = 20;
+  // ---- Load decision phases ----
+  if (solver->decision_path && !solver->decision_list) {
+    kissat_load_decision_list(solver, solver->decision_path);
+    solver->decision_active = (solver->decision_list != NULL);
+  }
   if (!res && GET_OPTION (luckyearly))
     res = kissat_lucky (solver);
   if (!res && kissat_preprocessing (solver))

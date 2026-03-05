@@ -17,7 +17,9 @@
 #include <unistd.h>
 
 #define SOLVER_NAME "Kissat SAT Solver"
-
+void kissat_set_decision_file(kissat *solver, const char *path) {
+  solver->decision_path = path;
+}
 typedef struct application application;
 
 struct application {
@@ -224,6 +226,7 @@ static void print_complete_usage (void) {
           "supported:\n");
   printf ("\n");
   kissat_configuration_usage ();
+  printf ("  --decision-file=<path>  load decision variable phases\n");
   printf ("\n");
   printf ("Or '<option>' is one of the following long options:\n\n");
   kissat_options_usage ();
