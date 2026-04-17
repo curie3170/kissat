@@ -128,6 +128,7 @@ struct kissat {
   unsigned decision_pos;
   unsigned decision_len;
   unsigned *decision_list;   
+  // unsigned last_decision_level;
   eliminated eliminated;
   unsigneds etrail;
 

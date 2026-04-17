@@ -157,6 +157,80 @@ unsigned kissat_next_decision_variable (kissat *solver) {
         solver->decision_active = false;
       }
   }
+  // if (solver->decision_active && solver->decision_list && solver->decision_pos < 50) {
+  //   unsigned found_idx = INVALID_IDX;
+
+  //   for (unsigned i = 0; i < solver->decision_len; i++) {
+  //     unsigned idx = solver->decision_list[i];
+  //     if (idx >= (unsigned) solver->vars) continue;
+  //     if (solver->values[LIT (idx)]) continue;
+
+  //     found_idx = idx;
+  //     break; 
+  //   }
+
+  //   if (found_idx != INVALID_IDX) {
+  //     solver->decision_pos++; // 주입 횟수 증가
+      
+  //     kissat_message (solver, "DECISION-FILE: using var=%u (count=%u, level=%u)", 
+  //                     found_idx, solver->decision_pos, solver->level);
+
+  //     // 50개를 채우는 순간 비활성화
+  //     if (solver->decision_pos >= 50) {
+  //       solver->decision_active = false;
+  //       kissat_message (solver, "DECISION-FILE: 50 decisions reached, switching off");
+  //     }
+      
+  //     return found_idx; // 가이드 변수 반환
+  //   } else {
+  //     // 리스트에 더 이상 쓸 변수가 없으면 모드 종료
+  //     solver->decision_active = false;
+  //     kissat_message (solver, "DECISION-FILE: no more variables in list");
+  //   }
+  // }
+  
+  // if (solver->decision_active && solver->decision_list) {
+  //   if (solver->decision_pos >= 50 || solver->decision_pos >= solver->decision_len) {
+  //       solver->decision_active = false;
+  //   }
+  //   else {
+  //       if (solver->level < solver->last_decision_level) {
+  //       solver->decision_active = false;
+  //       kissat_message(solver, "Backtrack detected (level %u < last %u). Switching off.", 
+  //                      solver->level, solver->last_decision_level);
+  //       }
+  //       else {
+  //           solver->last_decision_level = solver->level;
+  //           while (solver->decision_pos < solver->decision_len) {
+  //             unsigned idx = solver->decision_list[solver->decision_pos++];
+
+  //             // skip invalid
+  //             if (idx >= (unsigned) solver->vars)
+  //               continue;
+
+  //             // skip already assigned
+  //             unsigned lit = LIT(idx);
+  //             if (solver->values[lit])
+  //               continue;
+
+  //             // #ifndef QUIET
+  //             kissat_message(solver,
+  //               "DECISION-FILE: using var=%u (pos %u/%u, level=%u)",
+  //               idx, solver->decision_pos, solver->decision_len, solver->level);
+  //             // #endif
+  //             if (solver->decision_pos >= 50) {
+  //               solver->decision_active = false;
+  //             }
+
+  //             return idx; 
+  //           }
+
+  //               // decision-file list exhausted
+  //           solver->decision_active = false;  
+  //         }
+  //       }
+  //     }
+  
 
   
 #ifdef LOGGING

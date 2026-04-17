@@ -43,6 +43,8 @@ static void kissat_load_decision_list(kissat *solver, const char *path) {
 
   unsigned idx;
   while (fscanf(f, "%u", &idx) == 1) {
+    if (idx == 0) continue;
+    idx--; 
     if (idx >= (unsigned) solver->vars) continue;
     if (size == cap) {
       cap *= 2;
