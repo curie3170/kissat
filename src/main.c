@@ -7,7 +7,24 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>   // strncmp
-
+static const char *extract_decision_path_from_argv (int *argc, char ***argv) {
+  // Parser: --decision-file=PATH
+  char **av = *argv;
+  int ac = *argc;
+  const char *path = 0;
+  int w = 0;
+  for (int r = 0; r < ac; r++) {
+    const char *a = av[r];
+    if (!strncmp(a, "--decision-file=", 16)) {
+      path = a + 16;
+      continue;
+    }
+    av[w++] = av[r];
+  }
+  av[w] = 0;
+  *argc = w;
+  return path;
+}
 static const char *extract_init_phase_path_from_argv (int *argc, char ***argv) {
   // Parser: --init-phase-file=PATH 
   char **av = *argv;
@@ -70,7 +87,11 @@ int main (int argc, char **argv) {
   if (init_phase_path) {
     kissat_set_init_phase_file(solver, init_phase_path);  
   }
-
+  const char *decision_path = extract_decision_path_from_argv(&argc, &argv);
+  if (decision_path) {
+    kissat_set_decision_file(solver, decision_path);
+    kissat_message(solver, "decision-file: option set to '%s'", decision_path);
+  }
   res = kissat_application (solver, argc, argv);
   kissat_reset_signal_handler ();
   ignore_alarm = true;

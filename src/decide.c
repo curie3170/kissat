@@ -124,6 +124,40 @@ static unsigned next_random_decision (kissat *solver) {
 }
 
 unsigned kissat_next_decision_variable (kissat *solver) {
+if (solver->decision_active && solver->decision_list) {
+    if (solver->decision_pos >= 50) {
+      solver->decision_active = false;
+    } 
+    else {
+        while (solver->decision_pos < solver->decision_len) {
+          unsigned idx = solver->decision_list[solver->decision_pos++];
+
+          // skip invalid
+          if (idx >= (unsigned) solver->vars)
+            continue;
+
+          // skip already assigned
+          unsigned lit = LIT(idx);
+          if (solver->values[lit])
+            continue;
+
+          // #ifndef QUIET
+          kissat_message(solver,
+            "DECISION-FILE: using var=%u (pos %u/%u, level=%u)",
+            idx, solver->decision_pos, solver->decision_len, solver->level);
+          // #endif
+          if (solver->decision_pos >= 50) {
+            solver->decision_active = false;
+          }
+
+          return idx; 
+        }
+
+              // decision-file list exhausted
+        solver->decision_active = false;
+      }
+}
+
 #ifdef LOGGING
   const char *type = 0;
 #endif

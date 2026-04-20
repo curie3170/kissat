@@ -110,6 +110,7 @@ static unsigned reuse_trail (kissat *solver) {
 }
 
 void kissat_restart (kissat *solver) {
+  solver->decision_active = false;
   START (restart);
   INC (restarts);
   ADD (restarts_levels, solver->level);

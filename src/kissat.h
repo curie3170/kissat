@@ -4,6 +4,7 @@
 typedef struct kissat kissat;
 
 void kissat_set_init_phase_file(struct kissat *, const char *path);
+void kissat_set_decision_file(kissat *solver, const char *path);
 // Default (partial) IPASIR interface.
 
 const char *kissat_signature (void);

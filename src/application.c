@@ -18,6 +18,9 @@
 
 #include "kissat.h"
 #define SOLVER_NAME "Kissat SAT Solver"
+void kissat_set_decision_file(kissat *solver, const char *path) {
+  solver->decision_path = path;
+}
 void kissat_set_init_phase_file(kissat *solver, const char *path) {
   solver->init_phase_path = path;
 }
@@ -230,6 +233,7 @@ static void print_complete_usage (void) {
   printf ("\n");
   printf ("Or '<option>' is one of the following long options:\n\n");
   printf ("  --init-phase-file=<path>  load initial variable phases (0/1,+1/-1,...)\n");
+  printf ("  --decision-file=<path>  load decision variable phases\n");
   kissat_options_usage ();
 #else
   printf ("The solver was configured without options ('--no-options').\n");

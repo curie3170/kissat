@@ -40,7 +40,7 @@ kissat *kissat_init (void) {
   solver->initphases_applied = false;
   solver->init_phase_buf = 0;
   solver->init_phase_path = 0;
-  //
+  
   solver->watching = true;
   solver->conflict.size = 2;
   solver->scinc = 1.0;
