@@ -1,4 +1,5 @@
 #include "decide.h"
+#include "flags.h"
 #include "inlineframes.h"
 #include "inlineheap.h"
 #include "inlinequeue.h"
@@ -134,6 +135,10 @@ unsigned kissat_next_decision_variable (kissat *solver) {
 
           // skip invalid
           if (idx >= (unsigned) solver->vars)
+            continue;
+
+          // skip substituted/eliminated variables (preprocessing removed them)
+          if (!ACTIVE(idx))
             continue;
 
           // skip already assigned
